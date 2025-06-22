@@ -1,0 +1,5 @@
+{
+    "require": {
+        "beyondcode/laravel-websockets": "^1.14"
+    }
+}

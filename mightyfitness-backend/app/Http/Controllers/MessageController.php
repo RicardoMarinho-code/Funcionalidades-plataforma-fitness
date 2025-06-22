@@ -3,56 +3,43 @@
 namespace App\Http\Controllers;
 
 use App\Models\Message;
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class MessageController extends Controller
 {
-    // Listar todas as mensagens entre dois usuários
-    public function index(Request $request)
+    public function index($userId)
     {
-        $validator = Validator::make($request->all(), [
-            'sender_id' => 'required|exists:users,id',
-            'receiver_id' => 'required|exists:users,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $messages = Message::where(function ($query) use ($request) {
-            $query->where('sender_id', $request->sender_id)
-                  ->where('receiver_id', $request->receiver_id);
-        })->orWhere(function ($query) use ($request) {
-            $query->where('sender_id', $request->receiver_id)
-                  ->where('receiver_id', $request->sender_id);
-        })
-        ->orderBy('created_at', 'asc')
-        ->get();
+        $messages = Message::where(function ($q) use ($userId) {
+            $q->where('sender_id', Auth::id())
+              ->where('receiver_id', $userId);
+        })->orWhere(function ($q) use ($userId) {
+            $q->where('sender_id', $userId)
+              ->where('receiver_id', Auth::id());
+        })->orderBy('created_at', 'asc')->get();
 
         return response()->json($messages);
     }
 
-    // Enviar uma nova mensagem
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'sender_id'   => 'required|exists:users,id',
+        $request->validate([
             'receiver_id' => 'required|exists:users,id',
-            'content'     => 'required|string',
-            'type'        => 'in:text,image'
+            'message' => 'nullable|string',
+            'image' => 'nullable|image|max:2048', // aceita imagem opcional
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+        // Upload da imagem (se houver)
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('chat_images', 'public');
         }
 
         $message = Message::create([
-            'sender_id'   => $request->sender_id,
+            'sender_id' => Auth::id(),
             'receiver_id' => $request->receiver_id,
-            'content'     => $request->content,
-            'type'        => $request->type ?? 'text',
+            'message' => $request->message,
+            'image' => $imagePath,
         ]);
 
         return response()->json($message, 201);
