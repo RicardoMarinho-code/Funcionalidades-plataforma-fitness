@@ -2,47 +2,71 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\ProgressPhoto;
+use App\Models\PersonalNote;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
+        'tipo',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'tipo' => 'string',
+    ];
+
     /**
-     * Get the attributes that should be cast.
+     * Relacionamento: um usuário pode ter muitas fotos de progresso.
      *
-     * @return array<string, string>
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    protected function casts(): array
+    public function progressPhotos(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(ProgressPhoto::class);
+    }
+
+    /**
+     * Se for personal, ele pode ter anotações feitas para os alunos.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function notasComoPersonal(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PersonalNote::class, 'personal_id');
+    }
+
+    /**
+     * Se for aluno, ele pode ter notas associadas a ele.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function notasRecebidas(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PersonalNote::class, 'student_id');
+    }
+
+    /**
+     * Sempre criptografa a senha antes de salvar.
+     *
+     * @param string $value
+     * @return void
+     */
+    public function setPasswordAttribute($value): void
+    {
+        $this->attributes['password'] = bcrypt($value);
     }
 }
