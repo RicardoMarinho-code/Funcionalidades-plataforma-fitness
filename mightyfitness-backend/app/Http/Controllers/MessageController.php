@@ -1,60 +1,45 @@
-<?php
-
 namespace App\Http\Controllers;
 
+use App\Events\NewMessageEvent;
 use App\Models\Message;
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 
-class MessageController extends Controller
+class ChatController extends Controller
 {
-    // Listar todas as mensagens entre dois usuários
-    public function index(Request $request)
+    public function sendMessage(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'sender_id' => 'required|exists:users,id',
+        $data = $request->validate([
             'receiver_id' => 'required|exists:users,id',
+            'content' => 'nullable|string',
+            'image' => 'nullable|image|max:2048'
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+        $data['sender_id'] = auth()->id();
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('chat_images', 'public');
         }
 
-        $messages = Message::where(function ($query) use ($request) {
-            $query->where('sender_id', $request->sender_id)
-                  ->where('receiver_id', $request->receiver_id);
-        })->orWhere(function ($query) use ($request) {
-            $query->where('sender_id', $request->receiver_id)
-                  ->where('receiver_id', $request->sender_id);
-        })
-        ->orderBy('created_at', 'asc')
-        ->get();
+        $message = Message::create($data);
 
-        return response()->json($messages);
-    }
-
-    // Enviar uma nova mensagem
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'sender_id'   => 'required|exists:users,id',
-            'receiver_id' => 'required|exists:users,id',
-            'content'     => 'required|string',
-            'type'        => 'in:text,image'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $message = Message::create([
-            'sender_id'   => $request->sender_id,
-            'receiver_id' => $request->receiver_id,
-            'content'     => $request->content,
-            'type'        => $request->type ?? 'text',
-        ]);
+        broadcast(new NewMessageEvent($message))->toOthers();
 
         return response()->json($message, 201);
+    }
+
+    public function getMessages($userId)
+    {
+        $user = auth()->user();
+
+        $messages = Message::where(function ($q) use ($userId, $user) {
+            $q->where('sender_id', $user->id)
+              ->where('receiver_id', $userId);
+        })->orWhere(function ($q) use ($userId, $user) {
+            $q->where('sender_id', $userId)
+              ->where('receiver_id', $user->id);
+        })->orderBy('created_at')->get();
+
+        return response()->json($messages);
     }
 }

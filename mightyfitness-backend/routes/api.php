@@ -1,12 +1,12 @@
 <?php
 
+
 use Illuminate\Support\Facades\Route; // Added the missing use statement
 use App\Http\Controllers\ProgressPhotoController;
 use App\Http\Controllers\UserAgreementController;
 use App\Http\Controllers\PersonalNoteController;
 use App\Http\Controllers\PoseController;
-
-
+use App\Http\Controllers\Auth\ChatController as AuthChatController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/progress-photos', [ProgressPhotoController::class, 'store']);
@@ -18,5 +18,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notes/{student_id}', [PersonalNoteController::class, 'index']);
     Route::get('/poses', [PoseController::class, 'index']);
     Route::get('/progress-photos/pares', [ProgressPhotoController::class, 'pairedView']);
+    Route::post('/chat/send', [AuthChatController::class, 'sendMessage']);
+    Route::get('/chat/{userId}', [AuthChatController::class, 'getMessages']);
 });
 
