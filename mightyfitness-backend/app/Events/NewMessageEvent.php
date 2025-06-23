@@ -22,8 +22,7 @@ class NewMessageEvent implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        // Canal onde o evento será enviado — pode ser dinâmico depois
-        return new Channel('chat.' . $this->message->receiver_id);
+        return new PrivateChannel('chat.' . $this->message->receiver_id);
     }
 
     public function broadcastWith()

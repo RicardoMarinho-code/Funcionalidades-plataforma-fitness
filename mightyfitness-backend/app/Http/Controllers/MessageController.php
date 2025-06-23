@@ -1,47 +1,45 @@
-<?php
-
 namespace App\Http\Controllers;
 
+use App\Events\NewMessageEvent;
 use App\Models\Message;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
-class MessageController extends Controller
+class ChatController extends Controller
 {
-    public function index($userId)
+    public function sendMessage(Request $request)
     {
-        $messages = Message::where(function ($q) use ($userId) {
-            $q->where('sender_id', Auth::id())
-              ->where('receiver_id', $userId);
-        })->orWhere(function ($q) use ($userId) {
-            $q->where('sender_id', $userId)
-              ->where('receiver_id', Auth::id());
-        })->orderBy('created_at', 'asc')->get();
-
-        return response()->json($messages);
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
+        $data = $request->validate([
             'receiver_id' => 'required|exists:users,id',
-            'message' => 'nullable|string',
-            'image' => 'nullable|image|max:2048', // aceita imagem opcional
+            'content' => 'nullable|string',
+            'image' => 'nullable|image|max:2048'
         ]);
 
-        // Upload da imagem (se houver)
-        $imagePath = null;
+        $data['sender_id'] = auth()->id();
+
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('chat_images', 'public');
+            $data['image_path'] = $request->file('image')->store('chat_images', 'public');
         }
 
-        $message = Message::create([
-            'sender_id' => Auth::id(),
-            'receiver_id' => $request->receiver_id,
-            'message' => $request->message,
-            'image' => $imagePath,
-        ]);
+        $message = Message::create($data);
+
+        broadcast(new NewMessageEvent($message))->toOthers();
 
         return response()->json($message, 201);
+    }
+
+    public function getMessages($userId)
+    {
+        $user = auth()->user();
+
+        $messages = Message::where(function ($q) use ($userId, $user) {
+            $q->where('sender_id', $user->id)
+              ->where('receiver_id', $userId);
+        })->orWhere(function ($q) use ($userId, $user) {
+            $q->where('sender_id', $userId)
+              ->where('receiver_id', $user->id);
+        })->orderBy('created_at')->get();
+
+        return response()->json($messages);
     }
 }
