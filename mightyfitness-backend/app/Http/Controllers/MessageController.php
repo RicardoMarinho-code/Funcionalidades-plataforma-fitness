@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Message;
-use App\Events\NewMessageEvent; // se você usar eventos
+use App\Events\NewMessageEvent;
 use Illuminate\Support\Facades\Auth;
 
 class MessageController extends Controller
@@ -19,7 +19,6 @@ class MessageController extends Controller
             'image_path' => $request->file('image')?->store('chat_images', 'public'),
         ]);
 
-        // Se você estiver usando WebSockets:
         broadcast(new NewMessageEvent($message))->toOthers();
 
         return response()->json($message);

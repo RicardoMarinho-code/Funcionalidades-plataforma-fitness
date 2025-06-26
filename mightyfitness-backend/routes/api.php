@@ -1,11 +1,18 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProgressPhotoController;
 use App\Http\Controllers\UserAgreementController;
 use App\Http\Controllers\PersonalNoteController;
 use App\Http\Controllers\PoseController;
 use App\Http\Controllers\ChatController as AuthChatController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MessageController;
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/chat/send', [MessageController::class, 'sendMessage']);
+    Route::get('/chat/history/{userId}', [MessageController::class, 'fetchMessages']);
+});
+
 
 Route::post('/progress-photos', [ProgressPhotoController::class, 'store']);
 Route::get('/progress-photos', [ProgressPhotoController::class, 'index']);

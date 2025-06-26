@@ -1,13 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\MessageController;
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/chat/send', [MessageController::class, 'sendMessage']);
-    Route::get('/chat/history/{userId}', [MessageController::class, 'fetchMessages']);
-});
-
 return [
     'name' => env('APP_NAME', 'Laravel'),
 
