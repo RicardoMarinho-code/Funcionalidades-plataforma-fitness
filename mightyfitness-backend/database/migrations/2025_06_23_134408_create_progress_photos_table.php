@@ -12,19 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('progress_photos', function (Blueprint $table) {
-            Schema::create('progress_photos', function (Blueprint $table) {
-                $table->id();
-                $table->unsignedBigInteger('user_id');
-                $table->string('image_path');
-                $table->date('photo_date');
-                $table->float('weight')->nullable();
-                $table->text('notes')->nullable();
-                $table->enum('pose', ['frente', 'perfil', 'costas'])->nullable();
-                $table->enum('privacy', ['privado', 'personal', 'publico'])->default('privado');
-                $table->timestamps();
-                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            });
-            
+        $table->id();
+        $table->unsignedBigInteger('user_id');
+        $table->string('image_path');
+        $table->date('photo_date');
+        $table->float('weight')->nullable();
+        $table->text('notes')->nullable();
+        $table->enum('pose', ['frente', 'perfil', 'costas'])->nullable();
+        $table->enum('privacy', ['privado', 'personal', 'publico'])->default('privado');
+        $table->timestamps();
+        $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

@@ -19,14 +19,14 @@ class ChatTest extends TestCase
 
         $response = $this->postJson('/api/chat/send', [
             'receiver_id' => $receiver->id,
-            'content' => 'Olá!',
+            'content' => 'Olá, personal!',
         ]);
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('messages', [
             'sender_id' => $sender->id,
             'receiver_id' => $receiver->id,
-            'content' => 'Olá!',
+            'content' => 'Olá, personal!',
         ]);
     }
 }

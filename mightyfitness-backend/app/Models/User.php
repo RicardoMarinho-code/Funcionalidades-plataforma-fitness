@@ -4,13 +4,14 @@ namespace App\Models;
 
 use App\Models\ProgressPhoto;
 use App\Models\PersonalNote;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
+    use HasApiTokens, Notifiable, HasFactory;
 
     protected $fillable = [
         'name',
@@ -68,5 +69,15 @@ class User extends Authenticatable
     public function setPasswordAttribute($value): void
     {
         $this->attributes['password'] = bcrypt($value);
+    }
+
+    /**
+     * Um usuário pode ter um contrato de adesão.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function userAgreement()
+    {
+        return $this->hasOne(\App\Models\UserAgreement::class);
     }
 }
